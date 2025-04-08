@@ -1,4 +1,0 @@
-repository "Runeslayer 3D/Runeslayer 3D@7971620165607@cloud"
-  path "/"
-    br "/main"
-    co "/main"
