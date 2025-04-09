@@ -3,45 +3,36 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     [SerializeField]
-    Joystick joystick;
-
-    [SerializeField]
-    Transform PlayerSprite;
+    Joystick movementJoystick; // Joystick for movement
 
     [SerializeField]
     Animator animator;
 
-    bool Movement;
+    [SerializeField]
+    float moveSpeed = 5f;
 
-    void Start()
-    {
-        
-    }
     void Update()
     {
-        PlayerSprite.position = new Vector3(joystick.Horizontal + transform.position.x, 0.1f,  PlayerSprite.position.y + joystick.Vertical + transform.position.z);
-        
-        transform.LookAt(new Vector3 (PlayerSprite.position.x, 0, PlayerSprite.position.z));
+        // Movement input
+        float horizontalMove = movementJoystick.Horizontal;
+        float verticalMove = movementJoystick.Vertical;
 
-        transform.eulerAngles = new Vector3(0, transform.eulerAngles.y, 0);
+        Vector3 movement = new Vector3(horizontalMove, 0, verticalMove).normalized;
 
-        float speed = new Vector2(joystick.Horizontal, joystick.Vertical).magnitude;
-
-        if (joystick.Horizontal != 0 || joystick.Vertical != 0)
+        // Move the player
+        if (movement.magnitude > 0.1f)
         {
-            transform.Translate(Vector3.forward * Time.deltaTime);
-            animator.SetFloat("Speed", 0.67f);
+            transform.Translate(movement * moveSpeed * Time.deltaTime, Space.World);
 
-            Movement = true;
+            // Rotate the player to face the movement direction
+            Quaternion targetRotation = Quaternion.LookRotation(movement);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 500 * Time.deltaTime);
+
+            animator.SetFloat("Speed", movement.magnitude);
         }
         else
         {
-            if (Movement == true)
-            {
-                animator.SetFloat("Speed", 0);
-                Movement = false;
-            }
-        }   
+            animator.SetFloat("Speed", 0f);   animator.SetFloat("Speed", 0f);
+        }
     }
-
 }
