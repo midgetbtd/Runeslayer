@@ -9,7 +9,7 @@ public class PlayerMovement : MonoBehaviour
     Animator animator;
 
     [SerializeField]
-    float moveSpeed = 5f;
+    float moveSpeed = 3f;
 
     void Update()
     {
