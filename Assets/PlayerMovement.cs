@@ -3,36 +3,34 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     [SerializeField]
-    Joystick movementJoystick; // Joystick for movement
+    Joystick joystick; // Joystick for movement
+
+    [SerializeField]
+    Transform PlayerSprite;
 
     [SerializeField]
     Animator animator;
 
     [SerializeField]
-    float moveSpeed = 3f;
+    float speed = 5f; // Speed of the player
+
 
     void Update()
     {
-        // Movement input
-        float horizontalMove = movementJoystick.Horizontal;
-        float verticalMove = movementJoystick.Vertical;
+        PlayerSprite.position = new Vector3(joystick.Horizontal + transform.position.x, 0.1f, joystick.Vertical + transform.position.z);
+        
+        transform.LookAt(new Vector3 (PlayerSprite.position.x, 0, PlayerSprite.position.z));
 
-        Vector3 movement = new Vector3(horizontalMove, 0, verticalMove).normalized;
+        transform.eulerAngles = new Vector3(0, transform.eulerAngles.y, 0);
 
-        // Move the player
-        if (movement.magnitude > 0.1f)
+        if (joystick.Horizontal != 0 || joystick.Vertical != 0)
         {
-            transform.Translate(movement * moveSpeed * Time.deltaTime, Space.World);
-
-            // Rotate the player to face the movement direction
-            Quaternion targetRotation = Quaternion.LookRotation(movement);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 500 * Time.deltaTime);
-
-            animator.SetFloat("Speed", movement.magnitude);
+            transform.Translate(Vector3.forward * Time.deltaTime * speed);
+            animator.SetBool("isRunning", true);
         }
         else
         {
-            animator.SetFloat("Speed", 0f);   animator.SetFloat("Speed", 0f);
+            animator.SetBool("isRunning", false);
         }
     }
 }
