@@ -112,14 +112,13 @@ public class WeaponController : MonoBehaviour
     // This method will be called by the animation event
     public void OnShootAnimationEvent()
     {
-        // Instantiate the bullet and set its direction
         if (playerMovement.IsStationary())
         {
             GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
-            Bullet bulletScript = bullet.GetComponent<Bullet>();
-            if (bulletScript != null)
+
+            if (bullet.TryGetComponent<Bullet>(out var bulletScript))
             {
-                bulletScript.SetDirection(transform.forward); // Use the player's forward direction
+                bulletScript.SetDirection(firePoint.forward); // Use firePoint's forward direction
             }
         }
     }

@@ -4,7 +4,17 @@ public class Bullet : MonoBehaviour
 {
     public float speed = 10f; // Travel speed of the bullet
     public float lifetime = 5f; // Maximum lifetime of the bullet
-    private Vector3 moveDirection; // Direction the bullet will travel
+    private Rigidbody rb; // Reference to the Rigidbody
+
+    void Awake()
+    {
+        rb = GetComponent<Rigidbody>(); // Get the Rigidbody already added to the prefab
+
+        if (rb == null)
+        {
+            return;
+        }
+    }
 
     void Start()
     {
@@ -14,18 +24,20 @@ public class Bullet : MonoBehaviour
 
     public void SetDirection(Vector3 forwardDirection)
     {
-        // Set the direction the bullet will travel
-        moveDirection = forwardDirection.normalized;
-    }
-
-    void Update()
-    {
-        // Move the bullet in the set direction
-        transform.Translate(moveDirection * speed * Time.deltaTime, Space.World);
+        // Apply initial velocity to the Rigidbody
+        rb.linearVelocity = forwardDirection.normalized * speed;
     }
 
     void OnCollisionEnter(Collision collision)
     {
+        // Check if the collided object has an EnemyAI component
+        EnemyAI enemy = collision.gameObject.GetComponent<EnemyAI>();
+        if (enemy != null)
+        {
+            // Apply damage to the enemy
+            enemy.TakeDamage(25f); // Example damage value
+        }
+
         // Destroy the bullet on collision
         Destroy(gameObject);
     }
