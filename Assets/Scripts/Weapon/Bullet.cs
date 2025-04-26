@@ -5,41 +5,40 @@ public class Bullet : MonoBehaviour
     public float speed = 10f; // Travel speed of the bullet
     public float lifetime = 5f; // Maximum lifetime of the bullet
     private Rigidbody rb; // Reference to the Rigidbody
-    private float damage = 25f; // Default damage
 
     void Awake()
     {
-        rb = GetComponent<Rigidbody>();
+        rb = GetComponent<Rigidbody>(); // Get the Rigidbody already added to the prefab
+
+        if (rb == null)
+        {
+            return;
+        }
     }
 
     void Start()
     {
-        Destroy(gameObject, lifetime); // Destroy the bullet after its lifetime
+        // Destroy the bullet after its lifetime expires
+        Destroy(gameObject, lifetime);
     }
 
     public void SetDirection(Vector3 forwardDirection)
     {
+        // Apply initial velocity to the Rigidbody
         rb.linearVelocity = forwardDirection.normalized * speed;
-    }
-
-    public void SetDamage(float damageAmount)
-    {
-        damage = damageAmount;
     }
 
     void OnCollisionEnter(Collision collision)
     {
-        // Apply damage to the target
-        if (collision.gameObject.TryGetComponent<EnemyAI>(out var enemy))
+        // Check if the collided object has an EnemyAI component
+        EnemyAI enemy = collision.gameObject.GetComponent<EnemyAI>();
+        if (enemy != null)
         {
-            enemy.TakeDamage(damage);
-        }
-        else if (collision.gameObject.TryGetComponent<PlayerMovement>(out var player))
-        {
-            // Apply damage to the player (if needed)
-            Debug.Log($"Player hit! Damage: {damage}");
+            // Apply damage to the enemy
+            enemy.TakeDamage(25f); // Example damage value
         }
 
-        Destroy(gameObject); // Destroy the bullet on collision
+        // Destroy the bullet on collision
+        Destroy(gameObject);
     }
 }
