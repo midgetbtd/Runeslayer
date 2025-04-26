@@ -5,8 +5,6 @@ public class EnemyAI : MonoBehaviour
 {
     public NavMeshAgent agent;
     public Transform player;
-    public Transform firePoint; // FirePoint for projectile spawning
-    public GameObject projectile; // Enemy's projectile prefab
     public LayerMask whatIsGround, whatIsPlayer;
 
     public float health = 100;
@@ -25,12 +23,14 @@ public class EnemyAI : MonoBehaviour
     public bool playerInSightRange, playerInAttackRange;
 
     private Animator animator; // Reference to the Animator
+    private WeaponController weaponController; // Reference to the WeaponController
 
     void Awake()
     {
         player = GameObject.Find("Player").transform;
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>(); // Get the Animator component
+        weaponController = GetComponent<WeaponController>(); // Get the WeaponController component
     }
 
     void Update()
@@ -85,6 +85,9 @@ public class EnemyAI : MonoBehaviour
             // Trigger the attack animation
             animator.SetTrigger("Attack");
 
+            // Use the WeaponController to attack
+            weaponController.Attack(player);
+
             alreadyAttacked = true;
             Invoke(nameof(ResetAttack), timeBetweenAttacks);
         }
@@ -93,20 +96,6 @@ public class EnemyAI : MonoBehaviour
     private void ResetAttack()
     {
         alreadyAttacked = false;
-    }
-
-    // This method will be called by the animation event
-    public void OnShootAnimationEvent()
-    {
-        // Instantiate the projectile at the FirePoint
-        GameObject bullet = Instantiate(projectile, firePoint.position, firePoint.rotation);
-
-        // Set the direction of the projectile toward the player
-        if (bullet.TryGetComponent<Bullet>(out var bulletScript))
-        {
-            Vector3 directionToPlayer = (player.position - firePoint.position).normalized;
-            bulletScript.SetDirection(directionToPlayer); // Use the Bullet script's SetDirection method
-        }
     }
 
     public void TakeDamage(float damage)
