@@ -26,22 +26,38 @@ public class EnemyAI : MonoBehaviour
 
     private Animator animator; // Reference to the Animator
 
+    public float rotationSpeed = 5f; // Speed of rotation toward the player
+
     void Awake()
     {
         player = GameObject.Find("Player").transform;
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>(); // Get the Animator component
+
+        // Set instant movement (no acceleration)
+        agent.acceleration = 1000f; // Very high acceleration for instant speed
     }
 
     void Update()
     {
-        // Check for sight and attack range
         playerInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
         playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, whatIsPlayer);
 
-        if (!playerInSightRange && !playerInAttackRange) Patroling();
-        if (playerInSightRange && !playerInAttackRange) ChasePlayer();
-        if (playerInAttackRange && playerInSightRange) AttackPlayer();
+        if (!playerInSightRange && !playerInAttackRange)
+        {
+            Patroling();
+        }
+        if (playerInSightRange && !playerInAttackRange)
+        {
+            ChasePlayer();
+        }
+        if (playerInAttackRange && playerInSightRange)
+        {
+            AttackPlayer();
+        }
+
+        // Play running animation if moving
+        UpdateAnimation();
     }
 
     private void Patroling()
@@ -59,40 +75,78 @@ public class EnemyAI : MonoBehaviour
 
     private void SearchWalkPoint()
     {
-        // Calculate a random point within the walk point range
         float randomZ = Random.Range(-walkPointRange, walkPointRange);
         float randomX = Random.Range(-walkPointRange, walkPointRange);
-        // Set the walk point to the calculated position
         walkPoint = new Vector3(transform.position.x + randomX, transform.position.y, transform.position.z + randomZ);
-        // Check if the walk point is valid (on the ground)
+
         if (Physics.Raycast(walkPoint, -transform.up, 2f, whatIsGround))
+        {
             walkPointSet = true;
+        }
     }
 
     private void ChasePlayer()
     {
         agent.SetDestination(player.position);
+
+        // Instantly rotate toward the player
+        RotateTowardsPlayer();
     }
 
     private void AttackPlayer()
     {
-        // Make sure the enemy doesn't move
+        // Stop moving and rotate toward the player
         agent.SetDestination(transform.position);
-        transform.LookAt(player);
+        RotateTowardsPlayer();
 
-        if (!alreadyAttacked)
+        // Check if the enemy is stationary
+        if (IsStationary())
         {
-            // Trigger the attack animation
-            animator.SetTrigger("Attack");
+            if (!alreadyAttacked)
+            {
+                // Trigger the attack animation
+                animator.SetTrigger("Shoot");
 
-            alreadyAttacked = true;
-            Invoke(nameof(ResetAttack), timeBetweenAttacks);
+                alreadyAttacked = true;
+                Invoke(nameof(ResetAttack), timeBetweenAttacks);
+            }
         }
+        else
+        {
+            // Stop attacking if the enemy starts moving
+            animator.ResetTrigger("Shoot");
+        }
+    }
+
+    private void RotateTowardsPlayer()
+    {
+        Vector3 direction = (player.position - transform.position).normalized;
+        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
+        transform.rotation = lookRotation; // Instantly set the rotation to face the player
+    }
+
+    private bool IsStationary()
+    {
+        // Check if the NavMeshAgent's velocity is close to zero
+        return agent.velocity.magnitude <= 0.1f;
     }
 
     private void ResetAttack()
     {
         alreadyAttacked = false;
+    }
+
+    private void UpdateAnimation()
+    {
+        // Check if the enemy is moving
+        if (agent.velocity.magnitude > 0.1f)
+        {
+            animator.SetBool("isRunning", true); // Play running animation
+        }
+        else
+        {
+            animator.SetBool("isRunning", false); // Stop running animation
+        }
     }
 
     // This method will be called by the animation event
@@ -101,11 +155,10 @@ public class EnemyAI : MonoBehaviour
         // Instantiate the projectile at the FirePoint
         GameObject bullet = Instantiate(projectile, firePoint.position, firePoint.rotation);
 
-        // Set the direction of the projectile toward the player
+        // Set the direction of the projectile to the enemy's forward direction
         if (bullet.TryGetComponent<Bullet>(out var bulletScript))
         {
-            Vector3 directionToPlayer = (player.position - firePoint.position).normalized;
-            bulletScript.SetDirection(directionToPlayer); // Use the Bullet script's SetDirection method
+            bulletScript.SetDirection(transform.forward); // Use the enemy's forward direction
         }
     }
 
