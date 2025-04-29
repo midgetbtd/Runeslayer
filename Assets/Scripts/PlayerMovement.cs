@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections; // Add this to use IEnumerator
 using UnityEngine.InputSystem;
 
@@ -12,6 +12,9 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float dodgeDuration = 0.2f; // Duration of the dodge
     [SerializeField] private float dodgeCooldown = 1f; // Cooldown between dodges
     [SerializeField] private Transform enemyTarget; // Reference to the enemy's Transform
+
+    // Szünet funkcióhoz
+    [SerializeField] private PauseMenu pauseMenu; // Hivatkozás a PauseMenu komponensre
 
     private bool isDodging = false; // Tracks if the player is currently dodging
     private bool canDodge = true; // Tracks if the player can dodge
@@ -39,8 +42,20 @@ public class PlayerMovement : MonoBehaviour
         inputActions.Player.Disable();
     }
 
+    void Update()
+    {
+        // Escape billentyű lenyomásakor szünet (opcionális)
+        if (Input.GetKeyDown(KeyCode.Escape) && pauseMenu != null)
+        {
+            pauseMenu.TogglePause();
+        }
+    }
+
     void FixedUpdate()
     {
+        // Ha a játék szünetel, ne frissítsük a mozgást
+        if (Time.timeScale == 0f) return;
+
         if (isDodging) return; // Disable normal movement during dodge
 
         // Update PlayerSprite position based on joystick input
@@ -69,6 +84,9 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnDodgePerformed(InputAction.CallbackContext context)
     {
+        // Ne hajtsunk végre akciót szünet közben
+        if (Time.timeScale == 0f) return;
+
         if (canDodge)
         {
             Debug.Log("Dodge action triggered by button!"); // Debug to confirm input is working
@@ -114,9 +132,18 @@ public class PlayerMovement : MonoBehaviour
 
     public void TriggerDodge()
     {
-        if (canDodge)
+        if (canDodge && Time.timeScale != 0f)
         {
             StartCoroutine(Dodge());
+        }
+    }
+
+    // Metódus a szünet kapcsolására
+    public void TogglePause()
+    {
+        if (pauseMenu != null)
+        {
+            pauseMenu.TogglePause();
         }
     }
 }
